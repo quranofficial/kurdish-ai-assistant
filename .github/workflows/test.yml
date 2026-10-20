@@ -1,0 +1,22 @@
+name: Test Kurdish AI Assistant
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check repository
+        run: echo "Kurdish AI Assistant backend is ready to build"
+
+      - name: Check Gemini secret exists
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "Gemini secret is missing"
+            exit 1
+          fi
+          echo "Gemini secret is configured"

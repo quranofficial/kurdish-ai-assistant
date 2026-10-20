@@ -1,22 +1,57 @@
-name: Test Kurdish AI Assistant
+
+name: Test Gemini AI
 
 on:
   workflow_dispatch:
 
 jobs:
-  test:
+  test-gemini:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check repository
-        run: echo "Kurdish AI Assistant backend is ready to build"
-
-      - name: Check Gemini secret exists
+      - name: Test Gemini API
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          if [ -z "$GEMINI_API_KEY" ]; then
-            echo "Gemini secret is missing"
-            exit 1
-          fi
-          echo "Gemini secret is configured"
+          python - <<'PY'
+          import os
+          import json
+          import urllib.request
+          import urllib.error
+
+          key = os.environ.get("GEMINI_API_KEY", "")
+          if not key:
+              raise SystemExit("GEMINI_API_KEY secret is missing")
+
+          url = (
+              "https://generativelanguage.googleapis.com/"
+              "v1beta/models/gemini-2.5-flash:generateContent"
+          )
+
+          data = {
+              "contents": [{
+                  "parts": [{
+                      "text": "بە کوردی سۆرانی بڵێ: سڵاو"
+                  }]
+              }]
+          }
+
+          req = urllib.request.Request(
+              url,
+              data=json.dumps(data).encode("utf-8"),
+              headers={
+                  "Content-Type": "application/json",
+                  "x-goog-api-key": key
+              },
+              method="POST"
+          )
+
+          try:
+              with urllib.request.urlopen(req, timeout=60) as response:
+                  result = json.loads(response.read().decode("utf-8"))
+              print(json.dumps(result, ensure_ascii=False))
+              print("Gemini API test passed!")
+          except urllib.error.HTTPError as e:
+              print("Gemini API error:", e.code)
+              raise SystemExit(1)
+          PY
